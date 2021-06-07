@@ -1,0 +1,25 @@
+{
+  "name": "bot_event",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.9",
+    "discord": "^0.8.2",
+    "discord.js": "^12.5.3",
+    "node-cron": "^3.0.0",
+    "op.gg-api": "*",
+    "riot-lol-api": "^4.3.3"
+  },
+  "devDependencies": {
+    "axios": "^0.21.1",
+    "discord.js-poll": "^1.0.4",
+    "dotenv": "^10.0.0"
+  }
+}
