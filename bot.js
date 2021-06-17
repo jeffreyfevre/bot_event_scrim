@@ -21,7 +21,7 @@ let player = {
     "roles":[]
 }
 
-
+let matesTournoi = [];
 let players =[
     player = {
         "name" :"Viopalix",
@@ -147,17 +147,70 @@ const addReactions2 = (message) => {
 const exampleEmbed = new Discord.MessageEmbed()
     .setColor('#0099ff')
     .setTitle('Gérer les roles des utilisateurs')
-    .addField('Top', ':one:', true)
-    .addField('Midle', ':two:', true)
-    .addField('Jungle', ':three:', true)
-    .addField('Support', ':four:', true)
-    .addField('ADC', ':five:', true)
+    .addField('Top', ':one:', false)
+    .addField('Midle', ':two:', false)
+    .addField('Jungle', ':three:', false)
+    .addField('Support', ':four:', false)
+    .addField('ADC', ':five:', false)
+
+const scrimMessage = new Discord.MessageEmbed()
+    .setColor('#0099ff')
+    .setTitle('Scrim ce soir ? 21 h')
+    .addField('Je joue ce soir', ':thumbsup:', false)
+    .addField('Je joue pas ce soir', ':thumbsdown:', false)
+    .addField('Je sais pas', ':fingers_crossed:', false)
+
+
+const tournoiMessage = new Discord.MessageEmbed()
+    .setColor('#0099ff')
+    .setTitle('Organisation tournoi dimanche 27 juin à 16h ')
+    .setDescription("Le plan c'est d'avoir 20 personnes et 4 remplacants, d'essayer de faire des équipes équilibré ")
+    .addField('Je veux être dans une team', ':thumbsup:', false)
+    .addField('Je ne suis pas disponible', ':thumbsdown:', false)
+    .addField('Je veux bien être remplacant', ':fingers_crossed:', false)
+
+
 
 client.login(config.BOT_TOKEN).then(() => {
     console.log("Bot connecté !");
 
 });
 
+cron.schedule('* * * * *', async () => {
+    let edtResponse = await fetchLink();
+    const channel = client.channels.cache.get("851083668403519529");
+    channel.messages.fetch({ limit: 1 }).then(messages => {
+        let lastMessage = messages.first();
+        if ( lastMessage !== undefined && lastMessage.content !== edtResponse )
+        {
+            channel.send(edtResponse);
+            edtcron = edtResponse;
+        }
+    })
+        .catch(console.error);
+});
+async function fetchLink(retryCount = 0, maxCount = 5) {
+
+
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    const url = new URL(link);
+    const linkDate = new Date(url.searchParams.get("date"));
+    linkDate.setHours(0, 0, 0, 0);
+
+    if (linkDate >= date) {
+        return `${count} liens trouvées. :construction_worker:\r\nLien : ${link}`;
+    } else {
+        if (retryCount < maxCount) {
+            console.log(
+                `Link not valid, retrying... (${retryCount} attemp of ${maxCount})`
+            );
+            return fetchLink(retryCount + 1, maxCount);
+        } else {
+            return `Error : Failed to fetch link for ${date.toLocaleDateString()}, total attemps : ${retryCount}.`;
+        }
+    }
+}
 client.on("message",  async function (message) {
     const prefix = "!";
     if (message.author.bot) return;
@@ -169,7 +222,7 @@ client.on("message",  async function (message) {
     if (command === "scrim") {
         const timeTaken = Date.now() - message.createdTimestamp;
         let chann = message.channel;
-        chann.send("@everyone Scrim ce soir qui sera présent ? (si oui répondre emoji pouce en l'air) ").then(message =>{
+        chann.send(scrimMessage).then(message =>{
             addReactions2(message);
             number_mate = 0;
 
@@ -178,7 +231,8 @@ client.on("message",  async function (message) {
                 console.log(reaction.emoji.name == '👍');
                 if (reaction.emoji.name == '👍' && user.id != client.user.id && user.bot == false) {
                     number_mate++
-                    mates.push(user.username)
+                    if (mates.indexOf(user.username) == -1)
+                        mates.push(user.username)
 
                     console.log("up")
                 }
@@ -193,6 +247,46 @@ client.on("message",  async function (message) {
                 console.log(reaction.emoji.name == '👍');
                 if (reaction.emoji.name == '👍' && user.id != client.user.id && user.bot == false) {
 
+                    user.send("mechant");
+                    console.log("up");
+                }
+                else if (reaction.emoji.name == '👎' && user.id != client.user.id && user.bot == false){
+                    user.send("gentil");
+                    console.log("down")
+
+                }
+            })
+        });
+    }
+    if (command === "tournoi") {
+        const timeTaken = Date.now() - message.createdTimestamp;
+        let chann = message.channel;
+        chann.send(tournoiMessage).then(message =>{
+            addReactions2(message);
+            number_mate = 0;
+
+            client.on('messageReactionAdd',(reaction,user)=>{
+                console.log(reaction.emoji);
+                console.log(reaction.emoji.name == '👍');
+                if (reaction.emoji.name == '👍' && user.id != client.user.id && user.bot == false) {
+                    number_mate++
+                    console.log(user);
+                    if (matesTournoi.findIndex(user.username) == -1)
+                        matesTournoi.push(user.username)
+                    user.send("Cool ! Si tu es en retard tu seras fouetté 100 fois")
+                    console.log("up")
+                }
+                else if (reaction.emoji.name == '👎' && user.id != client.user.id && user.bot == false){
+                    user.send("mechant");
+                    console.log("down")
+                }
+            })
+            client.on('messageReactionRemove',(reaction,user)=>{
+                console.log(reaction.emoji);
+                console.log(reaction.emoji.name == '👍');
+                if (reaction.emoji.name == '👍' && user.id != client.user.id && user.bot == false) {
+                    if (matesTournoi.findIndex(user.username) != -1)
+                        matesTournoi.remove(user.username)
                     user.send("mechant");
                     console.log("up");
                 }
@@ -244,55 +338,55 @@ client.on("message",  async function (message) {
     }
     if (command === "users")
     {
-         //client.users.cache.forEach(member => console.log(member.username));
-         //let users = client.users.cache
+        //client.users.cache.forEach(member => console.log(member.username));
+        //let users = client.users.cache
         let users = message.guild.members.cache
         /*console.log(message.guild.members.cache);*/
-         users.forEach(guildMember => {
-             console.log(guildMember)
-             if (guildMember.user.bot != true)
-             {
-             guildMember.send(exampleEmbed).then(message2 => {
-                 addReactions(message2)
-                 console.log(message2)
-                 client.on('messageReactionAdd',(reaction,user) =>{
+        users.forEach(guildMember => {
+            console.log(guildMember)
+            if (guildMember.user.bot != true)
+            {
+                guildMember.send(exampleEmbed).then(message2 => {
+                    addReactions(message2)
+                    console.log(message2)
+                    client.on('messageReactionAdd',(reaction,user) =>{
 
-                     let mate = users.find(u => u == user.id)
+                        let mate = users.find(u => u == user.id)
 
-                    for (let i =0;i<allRoles.length;i++)
-                    {
-                        if (reaction.emoji.name == allRoles[i].emote && user.id != client.user.id && user.bot == false)
+                        for (let i =0;i<allRoles.length;i++)
                         {
-                            let role = message.guild.roles.cache.find(r => r.name == allRoles[i].name);
-
-                            if (role !== undefined || role != null )
+                            if (reaction.emoji.name == allRoles[i].emote && user.id != client.user.id && user.bot == false)
                             {
-                                mate.roles.add(role)
-                                mate.send("Ton role"+allRoles[i].name+" a été ajouté");
+                                let role = message.guild.roles.cache.find(r => r.name == allRoles[i].name);
+
+                                if (role !== undefined || role != null )
+                                {
+                                    mate.roles.add(role)
+                                    mate.send("Ton role"+allRoles[i].name+" a été ajouté");
+                                }
                             }
                         }
-                    }
 
-                 })
-                 client.on('messageReactionRemove',(reaction,user) =>{
-                     let mate = users.find(u => u == user.id)
-                     for (let i =0;i<allRoles.length;i++)
-                     {
-                         if (reaction.emoji.name == allRoles[i].emote && user.id != client.user.id && user.bot == false)
-                         {
-                             let role = message.guild.roles.cache.find(r => r.name == allRoles[i].name);
+                    })
+                    client.on('messageReactionRemove',(reaction,user) =>{
+                        let mate = users.find(u => u == user.id)
+                        for (let i =0;i<allRoles.length;i++)
+                        {
+                            if (reaction.emoji.name == allRoles[i].emote && user.id != client.user.id && user.bot == false)
+                            {
+                                let role = message.guild.roles.cache.find(r => r.name == allRoles[i].name);
 
-                             if (role !== undefined || role != null )
-                             {
-                                 mate.roles.remove(role)
-                                 mate.send("Ton role"+allRoles[i].name+" a été ajouté");
-                             }
-                         }
-                     }
-                 })
-             });
-             }
-         });
+                                if (role !== undefined || role != null )
+                                {
+                                    mate.roles.remove(role)
+                                    mate.send("Ton role"+allRoles[i].name+" a été ajouté");
+                                }
+                            }
+                        }
+                    })
+                });
+            }
+        });
     }
     if (command === "numb")
     {
@@ -301,9 +395,13 @@ client.on("message",  async function (message) {
     if (command === "liste")
     {
         let msgtxt;
+        console.log(mates);
+
+
         for (let i =0 ;  i< mates.length ; i++)
         {
-            if (mates[i] != undefined)
+            console.log(mates[i])
+            if (mates[i] !== undefined)
                 msgtxt += mates[i]+ "\n";
         }
         message.reply(msgtxt);
@@ -327,13 +425,13 @@ client.on("message",  async function (message) {
                     players[i].lvl =response.data.summonerLevel;
                     for (let m = 0;m<players.length;m++)
                     {
-                            for (let j =0;j<allRoles.length;j++)
-                            {
-                                let int = players[m].roles.findIndex(p => p == allRoles[j].name)
-                                console.log(int);
-                                if (int != -1)
-                                    allRoles[j].count ++;
-                            }
+                        for (let j =0;j<allRoles.length;j++)
+                        {
+                            let int = players[m].roles.findIndex(p => p == allRoles[j].name)
+                            console.log(int);
+                            if (int != -1)
+                                allRoles[j].count ++;
+                        }
 
 
                     }
